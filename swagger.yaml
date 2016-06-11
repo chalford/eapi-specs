@@ -1,0 +1,106 @@
+swagger: '2.0'
+info:
+  title: Items - Editorial API
+  description: The Items resource of the Editorial API
+  contact:
+    name: Charlie Halford
+    email: charlie.halford@bbc.co.uk
+  version: '0.1'
+basePath: /
+schemes:
+  - https
+produces:
+  - application/json
+  - application/ld+json
+parameters:
+  objectRedirect:
+    name: objectRedirect
+    in: query
+    description: Whether to provide a 302 redirect to the item's content
+    required: false
+    type: boolean
+    default: false
+paths:
+  /items/{uuid}:
+    get:
+      description: |
+        Retrieve a single item, giving either the UUID component from the item's full IRI. When retrieving an item representation, there are a number of metadata properties that you can expect will always be present. These are:
+
+        * dateCreated (CW)
+        * dateModified (CW)
+        * createdBy (CW)
+        * modifiedBy
+        * homeScope
+      summary: Retrieve a given version of the item, given the IRI of the Item (or UUID).
+      parameters:
+        - name: uuid
+          in: path
+          description: The UUID of the item
+          required: true
+          type: string
+        - $ref: '#/parameters/objectRedirect'
+      responses:
+        '200':
+          description: An item, with its set of default and custom metadata
+          schema:
+            $ref: '#/definitions/Item'
+  /items:
+    get:
+      description: |
+        Retrieve a single item, giving the full IRI as a query parameter. When retrieving an item representation, there are a number of metadata properties that you can expect will always be present. These are:
+
+        * dateCreated (CW)
+        * dateModified (CW)
+        * createdBy (CW)
+        * modifiedBy
+        * homeScope
+      summary: Retrieve a given version of the item, given the IRI of the Item (or UUID).
+      parameters:
+        - name: itemIRI
+          in: query
+          description: The IRI of the item
+          required: true
+          type: string
+        - $ref: '#/parameters/objectRedirect'
+      responses:
+        '200':
+          description: An item, with its set of default and custom metadata
+          schema:
+            $ref: '#/definitions/Item'
+definitions:
+  Item:
+    type: object
+    required:
+      - itemIRI
+      - uuid
+      - typeIRI
+      - dateCreated
+      - dateModified
+      - createdBy
+      - modifiedBy
+      - homeScope
+    properties:
+      itemIRI:
+        type: string
+      uuid:
+        type: string
+      typeIRI:
+        type: string
+      dateCreated:
+        type: string
+        #format: dateTime
+      dateModified:
+        type: string
+        #format: dateTime
+      createdBy:
+        type: string
+      modifiedBy:
+        type: string
+      homeScope:
+        type: string
+      title:
+        type: string
+      description:
+        type: string
+      objectIRI:
+        type: string
