@@ -13,6 +13,7 @@ produces:
   - application/ld+json
 parameters:
   objectRedirect:
+    # Question: Should we use a redirect here? Or can we bundle metadata and content up in one response?
     name: objectRedirect
     in: query
     description: Whether to provide a 302 redirect to the item's content
@@ -66,34 +67,54 @@ paths:
           description: An item, with its set of default and custom metadata
           schema:
             $ref: '#/definitions/Item'
+    post:
+      description: Add an item to the API
+      summary: Add item
+      parameters:
+        - name: item
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/NewItem'
+      responses:
+        201:
+          description: Itemd created
+          schema:
+            $ref: '#/definitions/Item'
 definitions:
   Item:
+    allOf:
+      - $ref: '#/definitions/NewItem'
+      - type: object
+        required:
+          - itemIRI
+          - uuid
+          - dateCreated
+          - dateModified
+          - createdBy
+          - modifiedBy
+        properties:
+          itemIRI:
+            type: string
+          uuid:
+            type: string
+          dateCreated:
+            type: string
+            #format: dateTime
+          dateModified:
+            type: string
+            #format: dateTime
+          createdBy:
+            type: string
+          modifiedBy:
+            type: string
+  NewItem:
     type: object
     required:
-      - itemIRI
-      - uuid
       - typeIRI
-      - dateCreated
-      - dateModified
-      - createdBy
-      - modifiedBy
       - homeScope
     properties:
-      itemIRI:
-        type: string
-      uuid:
-        type: string
       typeIRI:
-        type: string
-      dateCreated:
-        type: string
-        #format: dateTime
-      dateModified:
-        type: string
-        #format: dateTime
-      createdBy:
-        type: string
-      modifiedBy:
         type: string
       homeScope:
         type: string
