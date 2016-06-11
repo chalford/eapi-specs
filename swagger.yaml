@@ -4,7 +4,6 @@ info:
   description: The Items resource of the Editorial API
   contact:
     name: Charlie Halford
-    email: charlie.halford@bbc.co.uk
   version: '0.1'
 basePath: /
 schemes:
