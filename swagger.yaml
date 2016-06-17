@@ -1,7 +1,47 @@
 swagger: '2.0'
 info:
   title: Items - Editorial API
-  description: The Items resource of the Editorial API
+  description: |
+    ## TODO ##
+    
+    * Add management of containers to endpoint
+  
+    The service implementing this API stores and retrieves content item metadata. Specifically, it does not store the actual "body" of the content (for example, image data, or an XML form). The endpoint does provide convenience 
+    methods for clients wishing to upload their content in-band, which currently stores the content with the /object component in the Editorial API.
+    
+    This API uses RDF to markup the "content metadata" (which is distinct from operational metadata like security rules) of its output, including predicates found in the BBC Ontologies. Primarily, [Creative Works](http://www.bbc.co.uk/ontologies/creativework) are used to provide common, core metadata. To remain flexible to 
+    the large variety of clients targeted for this API, any predicate can be used for storage and retrieval. It is important to note, however, that is API does not behave as a triple store, and so ontology rules and inference will 
+    not be enforced.
+    
+    ## Filtering ##
+    
+    The Items resource provides **very limited** metadata filtering capabilities, in order to enable a flexible choice of underlying database. Single Items are retrieved with their unique itemIRI (inc. sameAs IRI), and groups of 
+    Items may be retrived by specifying a list of containers. All other use-cases for Item discovery should be performed on the Search endpoint, which maintains an index of all common and custom item fields.
+    
+    ## Containers ##
+    
+    The concept of a **container**, used in the "home" field, is defined as a set of content that is _mutually exclusive_ with the content of other containers. Containers are a specialised type of Item, and so can be operated
+    on in the same way, including the storage and retrieval of metadata against them.
+    
+    It is expected that views of content can be built from multiple containers, particularly where users have the permissions to view / edit content in multiple containers. The consumer can choose to not specify a container 
+    when filtering.
+    
+    They also provide a useful mechanism to bound or scope team content, providing a common alternative to per-tenant metadata that might be used to filter content shown to a user.
+    
+    ### Authorisation Inheritance ###
+    
+    Containers offer the mechansim of authorisation inheritance, where items inside of containers can choose to inherit the container's scopes. In order to create or move an item inside of a container, the principal performing the 
+    operation must have write access to at least one of the containers scope assignments.
+    
+    When writing content, the content editor may choose whether that peice of content inherits the scopes of its container (in addition to its own), or whether scopes are provided solely by its own scope defintions.
+    
+    ## Authorisation ##
+    
+    This API accepts signed tokens (that is, tokens that have a cryptographically verifiable origin) that inform the service which scopes the requesting principal has access to. As this token is signed, it is not necessary to do 
+    any further verification. The service will match the Items requested (or being created) to the set of scopes in the token, using the set of scopes defined by the scopes parameter on an Item (which can be inherited, see above)
+    or Container.
+    
+    **Note:** The concepts used here are based on the "Partners & Scopes" work by Michael Eyles
   contact:
     name: Charlie Halford
   version: '0.1'
@@ -29,8 +69,15 @@ paths:
         * dateCreated (CW)
         * dateModified (CW)
         * createdBy (CW)
-        * modifiedBy
-        * homeScope
+        * lastModifiedBy
+        * container
+        * itemIRI
+        * UUID
+        * typeIRI
+        * scopes
+        * inheritScopes
+        
+        The _container_ parameter informs the client of the space within which that peice of content is mangaged. 
       summary: Retrieve a given version of the item, given the IRI of the Item (or UUID).
       parameters:
         - name: uuid
@@ -52,8 +99,15 @@ paths:
         * dateCreated (CW)
         * dateModified (CW)
         * createdBy (CW)
-        * modifiedBy
-        * homeScope
+        * lastModifiedBy
+        * container
+        * itemIRI
+        * UUID
+        * typeIRI
+        * scopes
+        * inheritScopes
+        
+        The _container_ parameter informs the client of the space within which that peice of content is mangaged. 
       summary: Retrieve a given version of the item, given the IRI of the Item (or UUID).
       parameters:
         - name: itemIRI
@@ -92,7 +146,7 @@ definitions:
           - dateCreated
           - dateModified
           - createdBy
-          - modifiedBy
+          - lastModifiedBy
         properties:
           itemIRI:
             type: string
@@ -106,13 +160,16 @@ definitions:
             #format: dateTime
           createdBy:
             type: string
-          modifiedBy:
+          lastModifiedBy:
             type: string
   NewItem:
     type: object
     required:
       - typeIRI
-      - homeScope
+      - home
+      - container
+      - scopes
+      - inheritScopes
     properties:
       typeIRI:
         type: string
@@ -124,3 +181,21 @@ definitions:
         type: string
       objectIRI:
         type: string
+      container:
+        type: string
+      scopes:
+        type: array
+        items:
+          $ref: '#/definitions/Scope'
+      inheritScopes:
+        type: boolean
+  Scope:
+    type: object
+    required:
+      - scopeId
+      - inherited
+    properties:
+      scopeId:
+        type: string
+      inherited:
+        type: boolean
