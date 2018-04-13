@@ -2,47 +2,68 @@ swagger: '2.0'
 info:
   title: Items - Editorial API
   description: |
-    The service implementing this API stores and retrieves content item metadata. Specifically, it does not store the actual "body" of the content (for example, image data, or an XML form). The endpoint does provide convenience 
-    methods for clients wishing to upload their content in-band, which currently stores the content with the /object component in the Editorial API.
+    This component is part of the [Editorial API](https://confluence.dev.bbc.co.uk/display/prodsys/Editorial+API).
+  
+    The service implementing this API stores and retrieves content item metadata. Specifically, it does **not** store the actual "body" of the content (for example, image data, or an XML form). The endpoint does provide convenience methods for clients wishing to upload their content in-band, which currently stores the content with the /object component in the Editorial API.
     
-    This API uses RDF to markup the "content metadata" (which is distinct from operational metadata like security rules) of its output, including predicates found in the BBC Ontologies. Primarily, 
-    [Creative Works](http://www.bbc.co.uk/ontologies/creativework) are used to provide common, core metadata. To remain flexible to the large variety of clients targeted for this API, any predicate can be used for storage and 
-    retrieval. At a later date, the API may be extended to map other metadata standards into the core metadata (e.g. [Dublin Core](http://dublincore.org/documents/dc-rdf/)). It is important to note, however, that is API does not 
-    behave as a triple store, and so ontology rules and inference will not be enforced.
+    This API uses [RDF](https://www.w3.org/TR/2014/NOTE-rdf11-primer-20140225/#section-data-model) to markup the "content metadata" (which is distinct from operational metadata like security rules) of its output, including predicates found in the BBC Ontologies. RDF uses [IRIs](https://en.wikipedia.org/wiki/Internationalized_Resource_Identifier) to reference other concepts and resources. Primarily, the [Creative Work](http://www.bbc.co.uk/ontologies/creativework) ontology is used to provide common, core metadata. To remain flexible to the large variety of clients targeted for this API, any predicate can be used for storage and retrieval. At a later date, the API may be extended to map other metadata standards into the core metadata (e.g. [Dublin Core](http://dublincore.org/documents/dc-rdf/)). It is important to note, however, that is API does not behave as a triple store, and so ontology rules and inference will not be enforced.
     
     ## Lack of Filtering ##
     
-    The Items resource provides **no** metadata filtering capabilities, in order to enable a flexible choice of underlying database. Single Items are retrieved with their unique itemIRI. All other use-cases for Item discovery, 
-    including container filtering, should be performed on the Search endpoint, which maintains an index of all common and custom item fields.
+    The Items resource provides **no** metadata filtering capabilities, in order to enable a flexible choice of underlying database, and as many scaling opportunities as possible. Single Items are retrieved with their unique itemIRI. All other use-cases for Item discovery, including container filtering, should be performed on the [Search API endpoint](https://confluence.dev.bbc.co.uk/display/prodsys/Search+API), which maintains an index of all common and custom item fields.
     
     ## Types ##
     
-    The primary reference for Types is the Types API Documentation. The typeIRI field used by Items can contain any IRI (except when creating containers, see below), but the recommended best practice is to use an IRI from the 
-    Types API that is deferenceable.
-    
-    ## Containers ##
-    
-    The concept of a **container**, used in the "containerIRI" field, is defined as a set of content that is _mutually exclusive_ with the content of other containers. Containers are a specialised type of Item, and so can be operated
-    on in the same way, including the storage and retrieval of metadata against them. They are managed with the item resources below, with the only restriction that they must specify the reserved type - _http://types/items:container_
-    
-    It is expected that users will require views consisting of content built from multiple containers, particularly where they have the permissions to view / edit content in multiple containers.
-    
-    They also provide a useful mechanism to bound or scope team content, providing a common alternative to per-tenant metadata that might be used to filter content shown to a user.
-    
-    ### Authorisation Inheritance ###
-    
-    Containers offer the mechansim of authorisation inheritance, where items inside of containers can choose to inherit the container's scopes. In order to create or move an item inside of a container, the principal performing the 
-    operation must have write access to at least one of the containers scope assignments.
-    
-    When writing content, the content editor may choose whether that peice of content inherits the scopes of its container (in addition to its own), or whether scopes are provided solely by its own scope defintions.
+    The primary reference for Types is the [Types API Documentation](http://docs.types1.apiary.io/). The typeIRI field used by Items can contain any IRI (except when creating containers, see below), but the recommended best practice is to use an IRI from the Types API that is de-referenceable.
     
     ## Authorisation ##
     
-    This API accepts signed tokens (that is, tokens that have a cryptographically verifiable origin) that inform the service which scopes the requesting principal has access to. As this token is signed, it is not necessary to do 
-    any further verification. The service will match the Items requested (or being created) to the set of scopes in the token, using the set of scopes defined by the scopes parameter on an Item (which can be inherited, see above)
-    or Container.
+    This API accepts signed tokens (that is, tokens that have a cryptographically verifiable origin) that inform the service which **scopes** the requesting principal has access to. As this token is signed, it is not necessary to do any further verification. 
     
-    **Note:** The concepts used here are based on the "Partners & Scopes" work by Michael Eyles
+    The service will match the Items requested (or being created) to the set of scopes in the token, using the set of scopes defined by the scopes parameter on an Item (which can be inherited, see below) or Container.
+    
+    ## Containers ##
+    
+    The concept of a **container**, used in the "containerIRI" field, is defined as a set of content that is _mutually exclusive_ with the content of other containers. Containers are a specialised type of Item, and so can be operated on in the same way, including the storage and retrieval of metadata against them. They are managed with the item resources below, with the only restriction that they must specify the reserved type - _http://types/items:container_
+    
+    They provide a useful mechanism to bound, organise and 'own' team content (see below for authorisation inheritance), additionally offering a commonly defined way to filter content shown to a user. They might also be useful to consumers wanting to apply inherited metadata to contained content (although this is not currently offered directly as a function in the API).
+    
+    It is also expected that users will require views consisting of content built from multiple containers, particularly where they have the permissions to view / edit content in multiple containers.
+    
+    ### Authorisation Inheritance ###
+    
+    Containers offer the mechansim of authorisation inheritance, where items inside of containers can choose to inherit the container's scopes. In order to create or move an item inside of a container, the principal performing the operation must have write access to at least one of the containers scope assignments.
+    
+    When writing content, the content editor may choose whether that peice of content inherits the scopes of its container (in addition to its own), or whether scopes are provided solely by its own scope defintions.
+    
+    ![Graphical explaination of container authorisation](https://confluence.dev.bbc.co.uk/download/attachments/128032457/Container%20explainer.png?version=2&modificationDate=1469446202794&api=v2)
+    
+    ## Glossary ##
+    
+    ### IRI ###
+    
+    Internationalised Resource Locator - essentially a unicode URI (Universal Resource Locator), such as http://Bücher.ch
+    
+    ### RDF ###
+    
+    Resource Description Framework - a meta data model for describing resources of any kind as triples, with a subject, a predicate and an object.
+    
+    ### JSON-LD ###
+    
+    Javascript Object Notation - Linked Data - A [standardised](http://json-ld.org/) mechanism for adding (or annotating) RDF in normal JSON documents.
+    
+    ### Scope ###
+    
+    A unit of authorisation, scopes define which resources a given principal is allowed to access. The resources can be of different types, from coarse grained API and tool scopes to fine grained content scopes. A number of factors determine which scope a particular user is granted access to, including the partner they are connecting on the behalf of, and the scopes assigned to each individual user.
+    
+    Content scopes should also have an additional modifier: operation. Given a scope of "eastenders-editorial", a scope assignment should also include the operation the principal is permitted to perform - in the case of an editorial user working on Eastenders, that could be read & write. Indivual content management systems will use these central scope definitions to control access to content.
+    
+    **Note:** This concept is based on the "[Partners & Scopes - Multitenant Architecture](https://confluence.dev.bbc.co.uk/download/attachments/125440467/Multi-Tenant%20Architecture.pptx?api=v2)" work by Michael Eyles
+    
+    ## Examples ##
+    
+    This document contains the data models accepted and returned by the various resources and operations, and if viewed in Apiary, should also allow you to interactively query "mock" versions of these endpoints. The mock versions are available by clicking on the operation name, and provide example request and responses.
+    
   contact:
     name: Charlie Halford
   version: '0.1'
@@ -61,18 +82,27 @@ parameters:
     required: false
     type: boolean
     default: false
+  id:
+    name: id
+    in: path
+    description: The ID of the item
+    required: true
+    type: string
+    pattern: '[\w-:]'
   uuid:
     name: uuid
     in: path
-    description: The UUID of the item
+    description: The UUID of the version
     required: true
     type: string
-    pattern: '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}'
+    pattern: '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 paths:
-  /items/{uuid}:
+  /items/{id}:
     get:
+      tags: 
+        - items
       description: |
-        Retrieve a single item, giving either the UUID component from the item's full IRI. When retrieving an item representation, there are a number of metadata properties that you can expect will always be present. These are:
+        Retrieve a single item, providing the ID component from the item's full IRI. When retrieving an item representation, there are a number of metadata properties that you can expect will always be present. These are:
 
         * dateCreated (CW)
         * dateModified (CW)
@@ -88,38 +118,38 @@ paths:
         The _container_ parameter informs the client of the space within which that peice of content is mangaged. 
       summary: Retrieve the most recent version of the item, given the UUID
       parameters:
-        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/id'
         - $ref: '#/parameters/objectRedirect'
       responses:
         '200':
           description: An item, with its set of default and custom metadata
           schema:
             $ref: '#/definitions/Item'
+        '404':
+          description: Item not found
     put:
+      tags: 
+        - items
       description: |
-        This endpoint allows a consumer to update a named resource, specifying either the UUID component of the IRI, or the full IRI. Updates are provided via the same request bodies as the create item POST request: either 
-        application/json or multipart/form-data.
+        This endpoint allows a consumer to update a named resource, specifying either the UUID component of the IRI, or the full IRI. Updates are provided via the same request bodies as the create item POST request: either application/json or multipart/form-data.
         
-        Updates to existing metadata fields will overwrite the values of those fields. Existing fields not included in an update request WILL NOT be erased. Specifying the targetScope parameter will move the item from its 
-        current scope to the new targeted scope. Write access to both scopes is required in this case.
+        Updates to existing metadata fields will overwrite the values of those fields. Existing fields not included in an update request WILL NOT be erased. Specifying the targetScope parameter will move the item from its current scope to the new targeted scope. Write access to both scopes is required in this case.
         
-        Updating the typeIRI parameter will change the item's current type to that of the new target. Be aware that clients + publishers can choose to use types and their definitions to validate an items content, and so you 
-        should ensure that any updates to the type should be reflected in the content as appropriate.
+        Updating the typeIRI parameter will change the item's current type to that of the new target. Be aware that clients + publishers can choose to use types and their definitions to validate an items content, and so you should ensure that any updates to the type should be reflected in the content as appropriate.
         
         Updating the containerIRI parameter will require that the user has write permission to the current container (to remove the item), and write permission on the new container (to add the item).
         
-        Once the PUT operation has completed, a new version of the item is created, incrementing the version number by 1. A GET request to an item will always return the most recent version for a given item (except when older 
-        versions are explicitly requested).
+        Once the PUT operation has completed, a new version of the item is created, incrementing the version number by 1. A GET request to an item will always return the most recent version for a given item (except when older versions are explicitly requested).
       summary: Modify an item
       consumes:
         - application/json
       parameters:
-        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/id'
         - name: item
           in: body
           required: false
           schema:
-            $ref: '#/definitions/NewItem'
+            $ref: '#/definitions/ModifiedItem'
       responses:
         '201':
           description: The new version created when modifying the item
@@ -128,8 +158,24 @@ paths:
               description: A URI to the newly created Item version
               type: string
               default: 'http://items/xyz/versions/2'
+        '404':
+          description: Item not found
+    delete:
+      tags: 
+        - items
+      description: Delete the Item and all of its versions
+      summary: Delete an item
+      parameters:
+        - $ref: '#/parameters/id'
+      responses:
+        '204':
+          description: Item deleted
+        '404':
+          description: Item not found
   /items:
     get:
+      tags: 
+        - items
       description: |
         Retrieve a single item, giving the full IRI as a query parameter. When retrieving an item representation, there are a number of metadata properties that you can expect will always be present. These are:
 
@@ -159,46 +205,61 @@ paths:
           schema:
             $ref: '#/definitions/Item'
     post:
+      tags: 
+        - items
       description: |
         This endpoint allows the client to create an item and its metadata.
         
-        Normally, metadata properties must be specified as full URIs (prefixes are only supported via JSON-LD). Clients can choose to omit the prefix or full IRI for a subset of Creative Work predicates, including title, 
-        description and author. When using this shorthand form, the API will attempt to resolve them against the Creative Work ontology. If a shorthand term is used (e.g. "producer") that doesn't resolve to a Creative Work 
-        predicate, the request will be rejected.
+        Normally, metadata properties must be specified as full URIs (prefixes are only supported via JSON-LD). Clients can choose to omit the prefix or full IRI for a subset of Creative Work predicates, including title, description and author. When using this shorthand form, the API will attempt to resolve them against the Creative Work ontology. If a shorthand term is used (e.g. "producer") that doesn't resolve to a Creative Work predicate, the request will be rejected.
         
-        The containerIRI field is required, and specifies the scope in which this item should be created. This scope must be writable to by the current user.
+        The containerIRI field is required, and specifies the initial scope(s) in which this item should be created. At least one scope must be writable to by the current user.
         
-        The typeIRI field is also required, and is used to associate an item with a particular identifyable type. By convention, the type parameter should be set to an IRI from the /types endpoint, preferably a specific 
-        version. However, consumers may insert any IRI they wish into this parameter, which provides convenience for integration scenarios where a consumer may have pre-existing type definitions.
+        When inserting non-'core' metadata, there is an expectation that the use of that metadata field is governed by the type parameter. For example, when adding "http://programmes-data.bbc.co.uk/presentationalTitle" as a non-core field, tools should expect that the type parameter would identify the type that describes the rules of both this metadata field, and the content retrieved from the object field, if present. However, it is important to note that this API will **not** enforce any metadata restrictions or validations defined in the associated type, that function is the responsibility of the editorial tool.
         
-        In the future, it may be possible for the client to include the withContent boolean flag with form-data Content-Types, uploading the content at the same time as the metadata in a field named "object". This will send 
-        the uploaded file to the default object store.
+        The typeIRI field is also required, and is used to associate an item with a particular identifyable type. By convention, the type parameter should be set to an IRI from the /types endpoint, preferably a specific version. However, consumers may insert any IRI they wish into this parameter, which provides convenience for integration scenarios where a consumer may have pre-existing type definitions.
+        
+        The id field is optional. If not included, the API will generate a UUID, and use that to generate the itemIRI. If it is included, it must match the regex '[\w-:]+'. As this field is a primary key, an attempt to create an item with an ID already in use will result in a 409 Conflict response.
+        
+        In the future, it may be possible for the client to include the withContent boolean flag with form-data Content-Types, uploading the content at the same time as the metadata in a field named "object". This will send the uploaded file to the default object store.
         
         The response to this endpoint is the newly created resource, in the same format as the "Get a single item" GET request, along with a Location header.
-      summary: Add an item, optionally referencing its content
+      summary: Create an item, optionally referencing its content
       consumes:
         - application/json
       parameters:
         - name: item
           in: body
-          required: false
+          required: true
           schema:
             $ref: '#/definitions/NewItem'
       responses:
-        201:
+        '201':
           description: Item created
           headers:
             'Location':
               description: A URI to the newly created Item
               type: string
               default: 'http://items/xyz'
-  /items/{uuid}/versions:
+        '409':
+          description: The ID provided is already in use
+          schema:
+            type: object
+            properties:
+              errorMessage:
+                type: string
+                default: The ID provided is already in use
+              id:
+                type: string
+                pattern: '[\w-:]+'
+  /items/{id}/versions:
     get:
+      tags: 
+        - versions
       description: |
         Retrieve a list of versions for the specified item. Each version has its own IRI, as well as a more convenient sequential integer.
       summary: Retrieve a list of versions for the specified item
       parameters:
-        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/id'
       responses:
         '200':
           description: The list of versions for the specified item
@@ -206,13 +267,15 @@ paths:
             type: array
             items:
               $ref: '#/definitions/VersionReference'
-  /items/{uuid}/versions/{versionNumber}:
+  /items/{id}/versions/{versionNumber}:
     get:
+      tags: 
+        - versions
       description: |
         Retrieve a given version of the item, given the IRI of the Item (or UUID) and the version number.
       summary: Retrieve a given version of the item
       parameters:
-        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/id'
         - name: versionNumber
           in: path
           type: integer
@@ -230,6 +293,8 @@ paths:
               pattern: '<.*?>; rel="itemIRI", <.*?>; rel="versions"'
   /versions/{uuid}:
     get:
+      tags: 
+        - versions
       description: |
         Retrieve a given version, providing the UUID
       summary: Retrieve a given version
@@ -252,7 +317,7 @@ definitions:
       - type: object
         required:
           - itemIRI
-          - uuid
+          - id
           - dateCreated
           - dateModified
           - createdBy
@@ -260,31 +325,39 @@ definitions:
         properties:
           itemIRI:
             type: string
-            pattern: 'http:\/\/[\w\.]+\/[\w-]+'
-          uuid:
-            type: string
-            pattern: '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}'
+            pattern: 'http:\/\/[\w\.]+\/[\w-:]+'
           dateCreated:
             type: string
+            pattern: '(\d{4})-(\d{2})-(\d{2})T(\d{2})\:(\d{2})\:(\d{2})[+-](\d{2})\:(\d{2})'
             #format: dateTime
           dateModified:
             type: string
+            pattern: '(\d{4})-(\d{2})-(\d{2})T(\d{2})\:(\d{2})\:(\d{2})[+-](\d{2})\:(\d{2})'
             #format: dateTime
           createdBy:
             type: string
           lastModifiedBy:
             type: string
+            pattern: '(\d{4})-(\d{2})-(\d{2})T(\d{2})\:(\d{2})\:(\d{2})[+-](\d{2})\:(\d{2})'
+            #format: dateTime
   NewItem:
+    allOf:
+      - $ref: '#/definitions/ModifiedItem'
+      - type: object
+        required:
+          - typeIRI
+          - containerIRI
+          - scopes
+          - inheritScopes
+  ModifiedItem:
     type: object
-    required:
-      - typeIRI
-      - containerIRI
-      - scopes
-      - inheritScopes
     properties:
       typeIRI:
         type: string
-        pattern: 'http:\/\/[\w\.]+\/[\w-]+'
+        pattern: 'http:\/\/[\w\.]+\/[\w-:]+'
+      id:
+        type: string
+        pattern: '[\w-:]+'
       title:
         type: string
       description:
@@ -303,6 +376,8 @@ definitions:
       inheritScopes:
         type: boolean
         default: true
+    additionalProperties:
+      type: string
   Scope:
     type: object
     required:
@@ -324,10 +399,14 @@ definitions:
         description: The directly addressable version IRI
         type: string
         pattern: 'http:\/\/[\w\.]+\/[\w-]+'
+      versionUUID:
+        description: The machine generated UUID of this version
+        type: string
+        pattern: '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
       itemVersionIRI:
         description: The 'convenience' IRI for retrieving a version by its number
         type: string
-        pattern: 'http:\/\/[\w\.]+\/[\w-]+\/versions\/\d+'
+        pattern: 'http:\/\/[\w\.]+\/[\w-:]+\/versions\/\d+'
       versionNumber:
         description: The version number against the item. This is immutable.
         type: integer
